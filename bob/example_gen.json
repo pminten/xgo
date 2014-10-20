@@ -1,0 +1,96 @@
+[
+ {
+  "case": "stating something",
+  "in":   "Tom-ay-to, tom-aaaah-to.",
+  "want": "Whatever."
+ },
+ {
+  "case": "shouting",
+  "in":   "WATCH OUT!",
+  "want": "Whoa, chill out!"
+ },
+ {
+  "case": "asking a question",
+  "in":   "Does this cryogenic chamber make me look fat?",
+  "want": "Sure."
+ },
+ {
+  "case": "asking a numeric question",
+  "in":   "You are, what, like 15?",
+  "want": "Sure."
+ },
+ {
+  "case": "talking forcefully",
+  "in":   "Let's go make out behind the gym!",
+  "want": "Whatever."
+ },
+ {
+  "case": "using acronyms in regular speech",
+  "in":   "It's OK if you don't want to go to the DMV.",
+  "want": "Whatever."
+ },
+ {
+  "case": "forceful questions",
+  "in":   "WHAT THE HELL WERE YOU THINKING?",
+  "want": "Whoa, chill out!"
+ },
+ {
+  "case": "shouting numbers",
+  "in":   "1, 2, 3 GO!",
+  "want": "Whoa, chill out!"
+ },
+ {
+  "case": "only numbers",
+  "in":   "1, 2, 3",
+  "want": "Whatever."
+ },
+ {
+  "case": "question with only numbers",
+  "in":   "4?",
+  "want": "Sure."
+ },
+ {
+  "case": "shouting with special characters",
+  "in":   "ZOMG THE %^*@#$(*^ ZOMBIES ARE COMING!!11!!1!",
+  "want": "Whoa, chill out!"
+ },
+ {
+  "case": "shouting with no exclamation mark",
+  "in":   "I HATE YOU",
+  "want": "Whoa, chill out!"
+ },
+ {
+  "case": "statement containing question mark",
+  "in":   "Ending with ? means a question.",
+  "want": "Whatever."
+ },
+ {
+  "case": "prattling on",
+  "in":   "Wait! Hang on. Are you going to be OK?",
+  "want": "Sure."
+ },
+ {
+  "case": "silence",
+  "in":   "",
+  "want": "Fine. Be that way!"
+ },
+ {
+  "case": "prolonged silence",
+  "in":   " ",
+  "#":    "construct input as a random number of spaces, up to 10",
+  "random-repeat": 10,
+  "want": "Fine. Be that way!"
+ },
+ {
+  "case": "alternate silences",
+  "in":   "\t",
+  "#":    "construct input as a random number of tabs, up to 10",
+  "random-repeat": 10,
+  "want": "Fine. Be that way!"
+ },
+ {
+  "case": "multiple line questions",
+  "in":   "Does this cryogenic chamber make me look fat?\nno",
+  "want": "Whatever."
+ }
+]

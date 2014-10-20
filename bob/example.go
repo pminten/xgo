@@ -2,6 +2,8 @@ package bob
 
 import "strings"
 
+const TestVersion = 1
+
 func Hey(drivel string) string {
 	switch {
 	case silent(drivel):
@@ -16,7 +18,8 @@ func Hey(drivel string) string {
 }
 
 func yelling(drivel string) bool {
-	return strings.ToUpper(drivel) == drivel && strings.ToLower(drivel) != strings.ToUpper(drivel)
+	return strings.ToUpper(drivel) == drivel &&
+		strings.ToLower(drivel) != strings.ToUpper(drivel)
 }
 
 func asking(drivel string) bool {
@@ -24,5 +27,5 @@ func asking(drivel string) bool {
 }
 
 func silent(drivel string) bool {
-	return strings.Trim(drivel, " ") == ""
+	return strings.TrimSpace(drivel) == ""
 }
