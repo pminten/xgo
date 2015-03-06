@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const TestVersion = 1
+
 const (
 	LOSS = iota
 	DRAW
@@ -36,7 +38,15 @@ func (s TeamResultSlice) Len() int {
 }
 
 func (s TeamResultSlice) Less(i, j int) bool {
-	return s[i].points > s[j].points
+	if s[i].points == s[j].points {
+		if s[i].wins == s[j].wins {
+			return s[i].team < s[j].team
+		} else {
+			return s[i].wins > s[j].wins
+		}
+	} else {
+		return s[i].points > s[j].points
+	}
 }
 
 func (s TeamResultSlice) Swap(i, j int) {
@@ -47,8 +57,10 @@ func readInput(reader io.Reader) ([]inputEntry, error) {
 	scanner := bufio.NewScanner(reader)
 	var entries []inputEntry
 	for scanner.Scan() {
-		parts := strings.Split(scanner.Text(), ";")
-		if len(parts) == 3 {
+		line := scanner.Text()
+		if isEmptyLine(line) {
+			continue
+		} else if parts := strings.Split(line, ";"); len(parts) == 3 {
 			t1, t2 := parts[0], parts[1]
 			teams := [2]string{t1, t2}
 			var outcomes [2]int
@@ -59,15 +71,22 @@ func readInput(reader io.Reader) ([]inputEntry, error) {
 			} else if parts[2] == "draw" {
 				outcomes = [2]int{DRAW, DRAW}
 			} else {
-				continue
+				return nil, fmt.Errorf("Invalid outcome %q", parts[2])
 			}
 			entries = append(entries, inputEntry{teams: teams, outcomes: outcomes})
+		} else {
+			return nil, fmt.Errorf("Invalid line: %q", scanner.Text())
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 	return entries, nil
+}
+
+func isEmptyLine(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	return trimmed == "" || strings.HasPrefix(trimmed, "#")
 }
 
 func tallyEntries(entries []inputEntry) map[string]teamResult {
