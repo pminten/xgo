@@ -1,11 +1,10 @@
 package tournament
 
 import (
-	"bufio"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"sort"
-	"strings"
 )
 
 const TestVersion = 1
@@ -54,39 +53,36 @@ func (s TeamResultSlice) Swap(i, j int) {
 }
 
 func readInput(reader io.Reader) ([]inputEntry, error) {
-	scanner := bufio.NewScanner(reader)
 	var entries []inputEntry
-	for scanner.Scan() {
-		line := scanner.Text()
-		if isEmptyLine(line) {
-			continue
-		} else if parts := strings.Split(line, ";"); len(parts) == 3 {
-			t1, t2 := parts[0], parts[1]
+	csvReader := csv.NewReader(reader)
+	csvReader.Comma = ';'
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if len(record) == 3 {
+			t1, t2 := record[0], record[1]
 			teams := [2]string{t1, t2}
 			var outcomes [2]int
-			if parts[2] == "win" {
+			if record[2] == "win" {
 				outcomes = [2]int{WIN, LOSS}
-			} else if parts[2] == "loss" {
+			} else if record[2] == "loss" {
 				outcomes = [2]int{LOSS, WIN}
-			} else if parts[2] == "draw" {
+			} else if record[2] == "draw" {
 				outcomes = [2]int{DRAW, DRAW}
 			} else {
-				return nil, fmt.Errorf("Invalid outcome %q", parts[2])
+				return nil, fmt.Errorf("Invalid outcome %q", record[2])
 			}
 			entries = append(entries, inputEntry{teams: teams, outcomes: outcomes})
 		} else {
-			return nil, fmt.Errorf("Invalid line: %q", scanner.Text())
+			return nil, fmt.Errorf("Invalid record: %v", record)
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
 	return entries, nil
-}
-
-func isEmptyLine(line string) bool {
-	trimmed := strings.TrimSpace(line)
-	return trimmed == "" || strings.HasPrefix(trimmed, "#")
 }
 
 func tallyEntries(entries []inputEntry) map[string]teamResult {

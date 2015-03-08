@@ -43,16 +43,18 @@ Courageous Californians        |  3 |  0 |  1 |  2 |  1
 `[1:], // [1:] = strip initial readability newline
 	},
 	{
-		description: "ignore empty or comment lines",
+		description: "ignore empty lines",
 		input: `
+
 Allegoric Alaskians;Blithering Badgers;win
 Devastating Donkeys;Allegoric Alaskians;win
 
 Courageous Californians;Blithering Badgers;loss
 Blithering Badgers;Devastating Donkeys;loss
-# Yackity yackity yack
 Allegoric Alaskians;Courageous Californians;win
 Devastating Donkeys;Courageous Californians;draw
+
+
 `,
 		expected: `
 Team                           | MP |  W |  D |  L |  P
