@@ -54,19 +54,40 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		locInfo.translations["date"],
 		locInfo.translations["descr"],
 		locInfo.translations["change"]))
-	for _, entry := range entriesCopy {
-		date, err := time.Parse("2006-01-02", entry.Date)
-		if err != nil {
-			return "", err
+	// Parallelism, always a great idea
+	co := make(chan struct {
+		s string
+		e error
+	})
+	for _, et := range entriesCopy {
+		go func(entry Entry) {
+			date, err := time.Parse("2006-01-02", entry.Date)
+			if err != nil {
+				co <- struct {
+					s string
+					e error
+				}{e: err}
+			}
+			description := entry.Description
+			if len(description) > 27 {
+				description = description[:24] + "..."
+			}
+			co <- struct {
+				s string
+				e error
+			}{s: fmt.Sprintf("%-10s | %-25s | %13s\n",
+				locInfo.Date(date),
+				description,
+				locInfo.Currency(symbol, entry.Change))}
+		}(et)
+	}
+	for _ = range entriesCopy {
+		v := <-co
+		if v.e != nil {
+			return "", v.e
+		} else {
+			buf.WriteString(v.s)
 		}
-		description := entry.Description
-		if len(description) > 27 {
-			description = description[:24] + "..."
-		}
-		buf.WriteString(fmt.Sprintf("%-10s | %-25s | %13s\n",
-			locInfo.Date(date),
-			description,
-			locInfo.Currency(symbol, entry.Change)))
 	}
 	return buf.String(), nil
 }
