@@ -154,6 +154,8 @@ func moneyToString(cents int, thousandsSep, decimalSep string) string {
 }
 
 func sortEntries(entries []Entry) {
+	m1 := map[bool]int{true: 0, false: 1}
+	m2 := map[bool]int{true: -1, false: 1}
 	es := entries
 	for len(es) > 1 {
 		first, rest := es[0], es[1:]
@@ -161,7 +163,9 @@ func sortEntries(entries []Entry) {
 		for !success {
 			success = true
 			for i, e := range rest {
-				if lte(e, first) {
+				if (m1[e.Date == first.Date]*m2[e.Date < first.Date]*4 +
+					m1[e.Description == first.Description]*m2[e.Description < first.Description]*2 +
+					m1[e.Change == first.Change]*m2[e.Change < first.Change]*1) < 0 {
 					es[0], es[i+1] = es[i+1], es[0]
 					success = false
 				}
@@ -169,13 +173,4 @@ func sortEntries(entries []Entry) {
 		}
 		es = es[1:]
 	}
-}
-
-var m1 = map[bool]int{true: 0, false: 1}
-var m2 = map[bool]int{true: -1, false: 1}
-
-func lte(a, b Entry) bool {
-	return (m1[a.Date == b.Date]*m2[a.Date < b.Date]*4 +
-		m1[a.Description == b.Description]*m2[a.Description < b.Description]*2 +
-		m1[a.Change == b.Change]*m2[a.Change < b.Change]*1) < 0
 }
