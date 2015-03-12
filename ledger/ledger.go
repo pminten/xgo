@@ -52,10 +52,15 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	}
 
 	var buf bytes.Buffer
-	buf.WriteString(fmt.Sprintf("%-10s | %-25s | %s\n",
-		locInfo.translations["date"],
-		locInfo.translations["descr"],
-		locInfo.translations["change"]))
+	buf.WriteString(
+		locInfo.translations["date"] +
+			strings.Repeat(" ", 10-len(locInfo.translations["date"])) +
+			" | " +
+			locInfo.translations["descr"] +
+			strings.Repeat(" ", 25-len(locInfo.translations["descr"])) +
+			" | " +
+			locInfo.translations["change"] +
+			"\n")
 	// Parallelism, always a great idea
 	co := make(chan struct {
 		s string
@@ -70,17 +75,23 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 					e error
 				}{e: err}
 			}
-			description := entry.Description
-			if len(description) > 27 {
-				description = description[:24] + "..."
+			de := entry.Description
+			if len(de) > 27 {
+				de = de[:24] + "..."
+			} else {
+				de = de + strings.Repeat(" ", 25-len(de))
+			}
+			d := locInfo.Date(date)
+			a := locInfo.Currency(symbol, entry.Change)
+			var al int
+			for _ = range a {
+				al++
 			}
 			co <- struct {
 				s string
 				e error
-			}{s: fmt.Sprintf("%-10s | %-25s | %13s\n",
-				locInfo.Date(date),
-				description,
-				locInfo.Currency(symbol, entry.Change))}
+			}{s: d + strings.Repeat(" ", 10-len(d)) + " | " + de + " | " +
+				strings.Repeat(" ", 13-al) + a + "\n"}
 		}(et)
 	}
 	for _ = range entriesCopy {
