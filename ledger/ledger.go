@@ -5,7 +5,6 @@ package ledger
 import (
 	"bytes"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 )
@@ -30,7 +29,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	entriesCopy := make([]Entry, len(entries))
 	copy(entriesCopy, entries)
 
-	sort.Sort(entrySlice(entriesCopy))
+	sortEntries(entriesCopy)
 	var buf bytes.Buffer
 	buf.WriteString(fmt.Sprintf("%-10s | %-25s | %s\n",
 		locInfo.translations["date"],
@@ -154,18 +153,22 @@ func moneyToString(cents int, thousandsSep, decimalSep string) string {
 	return buf.String()
 }
 
-type entrySlice []Entry
-
-func (e entrySlice) Len() int {
-	return len(e)
-}
-
-func (e entrySlice) Swap(i, j int) {
-	e[i], e[j] = e[j], e[i]
-}
-
-func (e entrySlice) Less(i, j int) bool {
-	return lte(e[i], e[j])
+func sortEntries(entries []Entry) {
+	es := entries
+	for len(es) > 1 {
+		first, rest := es[0], es[1:]
+		success := false
+		for !success {
+			success = true
+			for i, e := range rest {
+				if lte(e, first) {
+					es[0], es[i+1] = es[i+1], es[0]
+					success = false
+				}
+			}
+		}
+		es = es[1:]
+	}
 }
 
 var m1 = map[bool]int{true: 0, false: 1}
