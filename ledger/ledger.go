@@ -26,8 +26,10 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	if !found {
 		return "", fmt.Errorf("Invalid or unknown locale %q", locale)
 	}
-	entriesCopy := make([]Entry, len(entries))
-	copy(entriesCopy, entries)
+	var entriesCopy []Entry
+	for _, e := range entries {
+		entriesCopy = append(entriesCopy, e)
+	}
 
 	m1 := map[bool]int{true: 0, false: 1}
 	m2 := map[bool]int{true: -1, false: 1}
@@ -191,7 +193,4 @@ func moneyToString(cents int, thousandsSep, decimalSep string) string {
 	buf.WriteString(decimalSep)
 	buf.WriteString(centsPart)
 	return buf.String()
-}
-
-func sortEntries(entries []Entry) {
 }
