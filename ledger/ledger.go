@@ -3,7 +3,6 @@
 package ledger
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"time"
@@ -51,16 +50,14 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		es = es[1:]
 	}
 
-	var buf bytes.Buffer
-	buf.WriteString(
-		locInfo.translations["date"] +
-			strings.Repeat(" ", 10-len(locInfo.translations["date"])) +
-			" | " +
-			locInfo.translations["descr"] +
-			strings.Repeat(" ", 25-len(locInfo.translations["descr"])) +
-			" | " +
-			locInfo.translations["change"] +
-			"\n")
+	s := locInfo.translations["date"] +
+		strings.Repeat(" ", 10-len(locInfo.translations["date"])) +
+		" | " +
+		locInfo.translations["descr"] +
+		strings.Repeat(" ", 25-len(locInfo.translations["descr"])) +
+		" | " +
+		locInfo.translations["change"] +
+		"\n"
 	// Parallelism, always a great idea
 	co := make(chan struct {
 		s string
@@ -99,10 +96,10 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		if v.e != nil {
 			return "", v.e
 		} else {
-			buf.WriteString(v.s)
+			s += v.s
 		}
 	}
-	return buf.String(), nil
+	return s, nil
 }
 
 var currencySymbols = map[string]string{
@@ -155,31 +152,31 @@ var locales = map[string]localeInfo{
 
 // The sign and amount are passed in separately to simplify some logic.
 func dutchCurrencyFormat(symbol string, cents int, negative bool) string {
-	var buf bytes.Buffer
-	buf.WriteString(symbol)
-	buf.WriteRune(' ')
-	buf.WriteString(moneyToString(cents, ".", ","))
+	var s string
+	s += symbol
+	s += " "
+	s += moneyToString(cents, ".", ",")
 	if negative {
-		buf.WriteRune('-')
+		s += "-"
 	} else {
-		buf.WriteRune(' ') // To keep alignment in report
+		s += " "
 	}
-	return buf.String()
+	return s
 }
 
 func americanCurrencyFormat(symbol string, cents int, negative bool) string {
-	var buf bytes.Buffer
+	var s string
 	if negative {
-		buf.WriteRune('(')
+		s += "("
 	}
-	buf.WriteString(symbol)
-	buf.WriteString(moneyToString(cents, ",", "."))
+	s += symbol
+	s += moneyToString(cents, ",", ".")
 	if negative {
-		buf.WriteRune(')')
+		s += ")"
 	} else {
-		buf.WriteRune(' ') // To keep alignment in report
+		s += " "
 	}
-	return buf.String()
+	return s
 }
 
 // Precondition: cents is not negative
@@ -199,9 +196,8 @@ func moneyToString(cents int, thousandsSep, decimalSep string) string {
 	for i := len(parts) - 1; i >= 0; i-- {
 		revParts = append(revParts, parts[i])
 	}
-	var buf bytes.Buffer
-	buf.WriteString(strings.Join(revParts, thousandsSep))
-	buf.WriteString(decimalSep)
-	buf.WriteString(centsPart)
-	return buf.String()
+	s := strings.Join(revParts, thousandsSep)
+	s += decimalSep
+	s += centsPart
+	return s
 }
