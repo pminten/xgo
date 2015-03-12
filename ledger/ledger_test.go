@@ -152,12 +152,12 @@ Date       | Description               | Change
 			{
 				Date:        "2015-03-12",
 				Description: "Buy present",
-				Change:      -123456,
+				Change:      123456,
 			},
 		},
 		expected: `
 Datum      | Omschrijving              | Verandering
-12-03-2015 | Buy present               |   $ 1.234,56-
+12-03-2015 | Buy present               |   $ 1.234,56 
 `,
 	},
 	{
