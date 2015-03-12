@@ -29,6 +29,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	}
 	entriesCopy := make([]Entry, len(entries))
 	copy(entriesCopy, entries)
+
 	sort.Sort(entrySlice(entriesCopy))
 	var buf bytes.Buffer
 	buf.WriteString(fmt.Sprintf("%-10s | %-25s | %s\n",
@@ -164,14 +165,14 @@ func (e entrySlice) Swap(i, j int) {
 }
 
 func (e entrySlice) Less(i, j int) bool {
-	if e[i].Date == e[j].Date {
-		if e[i].Description == e[i].Description {
-			return e[i].Change < e[j].Change
-		} else {
-			return e[i].Description < e[j].Description
-		}
-	} else {
-		// ISO dates sort nicely
-		return e[i].Date < e[j].Date
-	}
+	return lte(e[i], e[j])
+}
+
+var m1 = map[bool]int{true: 0, false: 1}
+var m2 = map[bool]int{true: -1, false: 1}
+
+func lte(a, b Entry) bool {
+	return (m1[a.Date == b.Date]*m2[a.Date < b.Date]*4 +
+		m1[a.Description == b.Description]*m2[a.Description < b.Description]*2 +
+		m1[a.Change == b.Change]*m2[a.Change < b.Change]*1) < 0
 }
