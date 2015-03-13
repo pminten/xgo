@@ -103,8 +103,76 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 			} else if locale == "en-US" {
 				d = d3 + "/" + d5 + "/" + d1
 			}
-			a, err := cus(locale, symbol, entry.Change)
-			if err != nil {
+			negative := false
+			cents := entry.Change
+			if cents < 0 {
+				cents = cents * -1
+				negative = true
+			}
+			var a string
+			if locale == "nl-NL" {
+				a += symbol
+				a += " "
+				centsStr := strconv.Itoa(cents)
+				switch len(centsStr) {
+				case 1:
+					centsStr = "00" + centsStr
+				case 2:
+					centsStr = "0" + centsStr
+				}
+				rest := centsStr[:len(centsStr)-2]
+				var parts []string
+				for len(rest) > 3 {
+					parts = append(parts, rest[len(rest)-3:])
+					rest = rest[:len(rest)-3]
+				}
+				if len(rest) > 0 {
+					parts = append(parts, rest)
+				}
+				for i := len(parts) - 1; i >= 0; i-- {
+					a += parts[i] + "."
+				}
+				a = a[:len(a)-1]
+				a += ","
+				a += centsStr[len(centsStr)-2:]
+				if negative {
+					a += "-"
+				} else {
+					a += " "
+				}
+			} else if locale == "en-US" {
+				if negative {
+					a += "("
+				}
+				a += symbol
+				centsStr := strconv.Itoa(cents)
+				switch len(centsStr) {
+				case 1:
+					centsStr = "00" + centsStr
+				case 2:
+					centsStr = "0" + centsStr
+				}
+				rest := centsStr[:len(centsStr)-2]
+				var parts []string
+				for len(rest) > 3 {
+					parts = append(parts, rest[len(rest)-3:])
+					rest = rest[:len(rest)-3]
+				}
+				if len(rest) > 0 {
+					parts = append(parts, rest)
+				}
+				for i := len(parts) - 1; i >= 0; i-- {
+					a += parts[i] + ","
+				}
+				a = a[:len(a)-1]
+				a += "."
+				a += centsStr[len(centsStr)-2:]
+				if negative {
+					a += ")"
+				} else {
+					a += " "
+				}
+			} else {
 				co <- struct {
 					s string
 					e error
@@ -135,81 +203,4 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 var currencySymbols = map[string]string{
 	"USD": "$",
 	"EUR": "€",
-}
-
-func cus(locale string, symbol string, cents int) (string, error) {
-	negative := false
-	if cents < 0 {
-		cents = cents * -1
-		negative = true
-	}
-	if locale == "nl-NL" {
-		var s string
-		s += symbol
-		s += " "
-		centsStr := strconv.Itoa(cents)
-		switch len(centsStr) {
-		case 1:
-			centsStr = "00" + centsStr
-		case 2:
-			centsStr = "0" + centsStr
-		}
-		rest := centsStr[:len(centsStr)-2]
-		var parts []string
-		for len(rest) > 3 {
-			parts = append(parts, rest[len(rest)-3:])
-			rest = rest[:len(rest)-3]
-		}
-		if len(rest) > 0 {
-			parts = append(parts, rest)
-		}
-		for i := len(parts) - 1; i >= 0; i-- {
-			s += parts[i] + "."
-		}
-		s = s[:len(s)-1]
-		s += ","
-		s += centsStr[len(centsStr)-2:]
-		if negative {
-			s += "-"
-		} else {
-			s += " "
-		}
-		return s, nil
-	} else if locale == "en-US" {
-		var s string
-		if negative {
-			s += "("
-		}
-		s += symbol
-		centsStr := strconv.Itoa(cents)
-		switch len(centsStr) {
-		case 1:
-			centsStr = "00" + centsStr
-		case 2:
-			centsStr = "0" + centsStr
-		}
-		rest := centsStr[:len(centsStr)-2]
-		var parts []string
-		for len(rest) > 3 {
-			parts = append(parts, rest[len(rest)-3:])
-			rest = rest[:len(rest)-3]
-		}
-		if len(rest) > 0 {
-			parts = append(parts, rest)
-		}
-		for i := len(parts) - 1; i >= 0; i-- {
-			s += parts[i] + ","
-		}
-		s = s[:len(s)-1]
-		s += "."
-		s += centsStr[len(centsStr)-2:]
-		if negative {
-			s += ")"
-		} else {
-			s += " "
-		}
-		return s, nil
-	} else {
-		return "", errors.New("")
-	}
 }
