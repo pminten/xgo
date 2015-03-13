@@ -162,32 +162,6 @@ func dutchCurrencyFormat(symbol string, cents int, negative bool) string {
 	var s string
 	s += symbol
 	s += " "
-	s += moneyToString(cents, ".", ",")
-	if negative {
-		s += "-"
-	} else {
-		s += " "
-	}
-	return s
-}
-
-func americanCurrencyFormat(symbol string, cents int, negative bool) string {
-	var s string
-	if negative {
-		s += "("
-	}
-	s += symbol
-	s += moneyToString(cents, ",", ".")
-	if negative {
-		s += ")"
-	} else {
-		s += " "
-	}
-	return s
-}
-
-// Precondition: cents is not negative
-func moneyToString(cents int, thousandsSep, decimalSep string) string {
 	centsStr := strconv.Itoa(cents)
 	switch len(centsStr) {
 	case 1:
@@ -204,12 +178,52 @@ func moneyToString(cents int, thousandsSep, decimalSep string) string {
 	if len(rest) > 0 {
 		parts = append(parts, rest)
 	}
-	var s string
 	for i := len(parts) - 1; i >= 0; i-- {
-		s = s + parts[i] + thousandsSep
+		s += parts[i] + "."
 	}
 	s = s[:len(s)-1]
-	s += decimalSep
+	s += ","
 	s += centsStr[len(centsStr)-2:]
+	if negative {
+		s += "-"
+	} else {
+		s += " "
+	}
+	return s
+}
+
+func americanCurrencyFormat(symbol string, cents int, negative bool) string {
+	var s string
+	if negative {
+		s += "("
+	}
+	s += symbol
+	centsStr := strconv.Itoa(cents)
+	switch len(centsStr) {
+	case 1:
+		centsStr = "00" + centsStr
+	case 2:
+		centsStr = "0" + centsStr
+	}
+	rest := centsStr[:len(centsStr)-2]
+	var parts []string
+	for len(rest) > 3 {
+		parts = append(parts, rest[len(rest)-3:])
+		rest = rest[:len(rest)-3]
+	}
+	if len(rest) > 0 {
+		parts = append(parts, rest)
+	}
+	for i := len(parts) - 1; i >= 0; i-- {
+		s += parts[i] + ","
+	}
+	s = s[:len(s)-1]
+	s += "."
+	s += centsStr[len(centsStr)-2:]
+	if negative {
+		s += ")"
+	} else {
+		s += " "
+	}
 	return s
 }
