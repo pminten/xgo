@@ -45,9 +45,9 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 			description = description[:24] + "..."
 		}
 		buf.WriteString(fmt.Sprintf("%-10s | %-25s | %13s\n",
-			locInfo.Date(date),
+			locInfo.dateString(date),
 			description,
-			locInfo.Currency(symbol, entry.Change)))
+			locInfo.currencyString(symbol, entry.Change)))
 	}
 	return buf.String(), nil
 }
@@ -63,7 +63,7 @@ type localeInfo struct {
 	translations map[string]string
 }
 
-func (f localeInfo) Currency(symbol string, cents int) string {
+func (f localeInfo) currencyString(symbol string, cents int) string {
 	negative := false
 	if cents < 0 {
 		cents = cents * -1
@@ -72,7 +72,7 @@ func (f localeInfo) Currency(symbol string, cents int) string {
 	return f.currency(symbol, cents, negative)
 }
 
-func (f localeInfo) Date(t time.Time) string {
+func (f localeInfo) dateString(t time.Time) string {
 	return t.Format(f.dateFormat)
 }
 
