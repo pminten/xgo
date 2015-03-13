@@ -4,7 +4,6 @@ package ledger
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -18,15 +17,15 @@ type Entry struct {
 }
 
 func FormatLedger(currency string, locale string, entries []Entry) (string, error) {
-	symbol, found := currencySymbols[currency]
-	if !found {
-		return "", fmt.Errorf("Invalid or unknown currency %q", currency)
-	}
 	var entriesCopy []Entry
 	for _, e := range entries {
 		entriesCopy = append(entriesCopy, e)
 	}
-
+	if len(entries) == 0 {
+		if _, err := FormatLedger(currency, "en-US", []Entry{{Date: "2014-01-01", Description: "", Change: 0}}); err != nil {
+			return "", err
+		}
+	}
 	m1 := map[bool]int{true: 0, false: 1}
 	m2 := map[bool]int{true: -1, false: 1}
 	es := entriesCopy
@@ -111,7 +110,16 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 			}
 			var a string
 			if locale == "nl-NL" {
-				a += symbol
+				if currency == "EUR" {
+					a += "€"
+				} else if currency == "USD" {
+					a += "$"
+				} else {
+					co <- struct {
+						s string
+						e error
+					}{e: errors.New("")}
+				}
 				a += " "
 				centsStr := strconv.Itoa(cents)
 				switch len(centsStr) {
@@ -144,7 +152,16 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 				if negative {
 					a += "("
 				}
-				a += symbol
+				if currency == "EUR" {
+					a += "€"
+				} else if currency == "USD" {
+					a += "$"
+				} else {
+					co <- struct {
+						s string
+						e error
+					}{e: errors.New("")}
+				}
 				centsStr := strconv.Itoa(cents)
 				switch len(centsStr) {
 				case 1:
@@ -198,9 +215,4 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		}
 	}
 	return s, nil
-}
-
-var currencySymbols = map[string]string{
-	"USD": "$",
-	"EUR": "€",
 }
