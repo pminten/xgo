@@ -5,6 +5,7 @@ package ledger
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -187,8 +188,13 @@ func americanCurrencyFormat(symbol string, cents int, negative bool) string {
 
 // Precondition: cents is not negative
 func moneyToString(cents int, thousandsSep, decimalSep string) string {
-	centsStr := fmt.Sprintf("%03d", cents) // Pad to 3 digits
-	centsPart := centsStr[len(centsStr)-2:]
+	centsStr := strconv.Itoa(cents)
+	switch len(centsStr) {
+	case 1:
+		centsStr = "00" + centsStr
+	case 2:
+		centsStr = "0" + centsStr
+	}
 	rest := centsStr[:len(centsStr)-2]
 	var parts []string
 	for len(rest) > 3 {
@@ -198,12 +204,12 @@ func moneyToString(cents int, thousandsSep, decimalSep string) string {
 	if len(rest) > 0 {
 		parts = append(parts, rest)
 	}
-	revParts := make([]string, 0, len(parts))
+	var s string
 	for i := len(parts) - 1; i >= 0; i-- {
-		revParts = append(revParts, parts[i])
+		s = s + parts[i] + thousandsSep
 	}
-	s := strings.Join(revParts, thousandsSep)
+	s = s[:len(s)-1]
 	s += decimalSep
-	s += centsPart
+	s += centsStr[len(centsStr)-2:]
 	return s
 }
