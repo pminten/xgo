@@ -3,9 +3,9 @@
 package ledger
 
 import (
+	"errors"
 	"fmt"
 	"strings"
-	"time"
 )
 
 const TestVersion = 1
@@ -50,14 +50,24 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		es = es[1:]
 	}
 
-	s := locInfo.translations["date"] +
-		strings.Repeat(" ", 10-len(locInfo.translations["date"])) +
-		" | " +
-		locInfo.translations["descr"] +
-		strings.Repeat(" ", 25-len(locInfo.translations["descr"])) +
-		" | " +
-		locInfo.translations["change"] +
-		"\n"
+	var s string
+	if locale == "nl-NL" {
+		s = "Datum" +
+			strings.Repeat(" ", 10-len("Datum")) +
+			" | " +
+			"Omschrijving" +
+			strings.Repeat(" ", 25-len("Omschrijving")) +
+			" | " + "Verandering" + "\n"
+	} else if locale == "en-US" {
+		s = "Date" +
+			strings.Repeat(" ", 10-len("Date")) +
+			" | " +
+			"Description" +
+			strings.Repeat(" ", 25-len("Description")) +
+			" | " + "Change" + "\n"
+	} else {
+		return "", errors.New("")
+	}
 	// Parallelism, always a great idea
 	co := make(chan struct {
 		s string
@@ -65,12 +75,24 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	})
 	for _, et := range entriesCopy {
 		go func(entry Entry) {
-			date, err := time.Parse("2006-01-02", entry.Date)
-			if err != nil {
+			if len(entry.Date) != 10 {
 				co <- struct {
 					s string
 					e error
-				}{e: err}
+				}{e: errors.New("")}
+			}
+			d1, d2, d3, d4, d5 := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
+			if d2 != '-' {
+				co <- struct {
+					s string
+					e error
+				}{e: errors.New("")}
+			}
+			if d4 != '-' {
+				co <- struct {
+					s string
+					e error
+				}{e: errors.New("")}
 			}
 			de := entry.Description
 			if len(de) > 27 {
@@ -78,7 +100,12 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 			} else {
 				de = de + strings.Repeat(" ", 25-len(de))
 			}
-			d := locInfo.Date(date)
+			var d string
+			if locale == "nl-NL" {
+				d = d5 + "-" + d3 + "-" + d1
+			} else if locale == "en-US" {
+				d = d3 + "/" + d5 + "/" + d1
+			}
 			a := locInfo.Currency(symbol, entry.Change)
 			var al int
 			for _ = range a {
@@ -108,9 +135,7 @@ var currencySymbols = map[string]string{
 }
 
 type localeInfo struct {
-	currency     func(symbol string, cents int, negative bool) string
-	dateFormat   string
-	translations map[string]string
+	currency func(symbol string, cents int, negative bool) string
 }
 
 func (f localeInfo) Currency(symbol string, cents int) string {
@@ -122,31 +147,12 @@ func (f localeInfo) Currency(symbol string, cents int) string {
 	return f.currency(symbol, cents, negative)
 }
 
-func (f localeInfo) Date(t time.Time) string {
-	return t.Format(f.dateFormat)
-}
-
-//	Currency(symbol string, cents int) string
-//	Date(symbol string, cents int) string
-
 var locales = map[string]localeInfo{
 	"nl-NL": {
-		currency:   dutchCurrencyFormat,
-		dateFormat: "02-01-2006",
-		translations: map[string]string{
-			"date":   "Datum",
-			"descr":  "Omschrijving",
-			"change": "Verandering",
-		},
+		currency: dutchCurrencyFormat,
 	},
 	"en-US": {
-		currency:   americanCurrencyFormat,
-		dateFormat: "01/02/2006",
-		translations: map[string]string{
-			"date":   "Date",
-			"descr":  "Description",
-			"change": "Change",
-		},
+		currency: americanCurrencyFormat,
 	},
 }
 

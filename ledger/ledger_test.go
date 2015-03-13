@@ -225,12 +225,24 @@ var failTestCases = []struct {
 		entries:  nil,
 	},
 	{
-		name:     "invalid date",
+		name:     "invalid date (way too high month)",
 		currency: "USD",
 		locale:   "en-US",
 		entries: []Entry{
 			{
-				Date:        "2015-03-122",
+				Date:        "2015-131-11",
+				Description: "Buy present",
+				Change:      12345,
+			},
+		},
+	},
+	{
+		name:     "invalid date (wrong separator)",
+		currency: "USD",
+		locale:   "en-US",
+		entries: []Entry{
+			{
+				Date:        "2015-12/11",
 				Description: "Buy present",
 				Change:      12345,
 			},
