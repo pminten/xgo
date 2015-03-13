@@ -22,10 +22,6 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	if !found {
 		return "", fmt.Errorf("Invalid or unknown currency %q", currency)
 	}
-	locInfo, found := locales[locale]
-	if !found {
-		return "", fmt.Errorf("Invalid or unknown locale %q", locale)
-	}
 	var entriesCopy []Entry
 	for _, e := range entries {
 		entriesCopy = append(entriesCopy, e)
@@ -107,7 +103,13 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 			} else if locale == "en-US" {
 				d = d3 + "/" + d5 + "/" + d1
 			}
-			a := locInfo.Currency(symbol, entry.Change)
+			a, err := cus(locale, symbol, entry.Change)
+			if err != nil {
+				co <- struct {
+					s string
+					e error
+				}{e: errors.New("")}
+			}
 			var al int
 			for _ = range a {
 				al++
@@ -135,95 +137,79 @@ var currencySymbols = map[string]string{
 	"EUR": "€",
 }
 
-type localeInfo struct {
-	currency func(symbol string, cents int, negative bool) string
-}
-
-func (f localeInfo) Currency(symbol string, cents int) string {
+func cus(locale string, symbol string, cents int) (string, error) {
 	negative := false
 	if cents < 0 {
 		cents = cents * -1
 		negative = true
 	}
-	return f.currency(symbol, cents, negative)
-}
-
-var locales = map[string]localeInfo{
-	"nl-NL": {
-		currency: dutchCurrencyFormat,
-	},
-	"en-US": {
-		currency: americanCurrencyFormat,
-	},
-}
-
-// The sign and amount are passed in separately to simplify some logic.
-func dutchCurrencyFormat(symbol string, cents int, negative bool) string {
-	var s string
-	s += symbol
-	s += " "
-	centsStr := strconv.Itoa(cents)
-	switch len(centsStr) {
-	case 1:
-		centsStr = "00" + centsStr
-	case 2:
-		centsStr = "0" + centsStr
-	}
-	rest := centsStr[:len(centsStr)-2]
-	var parts []string
-	for len(rest) > 3 {
-		parts = append(parts, rest[len(rest)-3:])
-		rest = rest[:len(rest)-3]
-	}
-	if len(rest) > 0 {
-		parts = append(parts, rest)
-	}
-	for i := len(parts) - 1; i >= 0; i-- {
-		s += parts[i] + "."
-	}
-	s = s[:len(s)-1]
-	s += ","
-	s += centsStr[len(centsStr)-2:]
-	if negative {
-		s += "-"
-	} else {
+	if locale == "nl-NL" {
+		var s string
+		s += symbol
 		s += " "
-	}
-	return s
-}
-
-func americanCurrencyFormat(symbol string, cents int, negative bool) string {
-	var s string
-	if negative {
-		s += "("
-	}
-	s += symbol
-	centsStr := strconv.Itoa(cents)
-	switch len(centsStr) {
-	case 1:
-		centsStr = "00" + centsStr
-	case 2:
-		centsStr = "0" + centsStr
-	}
-	rest := centsStr[:len(centsStr)-2]
-	var parts []string
-	for len(rest) > 3 {
-		parts = append(parts, rest[len(rest)-3:])
-		rest = rest[:len(rest)-3]
-	}
-	if len(rest) > 0 {
-		parts = append(parts, rest)
-	}
-	for i := len(parts) - 1; i >= 0; i-- {
-		s += parts[i] + ","
-	}
-	s = s[:len(s)-1]
-	s += "."
-	s += centsStr[len(centsStr)-2:]
-	if negative {
-		s += ")"
+		centsStr := strconv.Itoa(cents)
+		switch len(centsStr) {
+		case 1:
+			centsStr = "00" + centsStr
+		case 2:
+			centsStr = "0" + centsStr
+		}
+		rest := centsStr[:len(centsStr)-2]
+		var parts []string
+		for len(rest) > 3 {
+			parts = append(parts, rest[len(rest)-3:])
+			rest = rest[:len(rest)-3]
+		}
+		if len(rest) > 0 {
+			parts = append(parts, rest)
+		}
+		for i := len(parts) - 1; i >= 0; i-- {
+			s += parts[i] + "."
+		}
+		s = s[:len(s)-1]
+		s += ","
+		s += centsStr[len(centsStr)-2:]
+		if negative {
+			s += "-"
+		} else {
+			s += " "
+		}
+		return s, nil
+	} else if locale == "en-US" {
+		var s string
+		if negative {
+			s += "("
+		}
+		s += symbol
+		centsStr := strconv.Itoa(cents)
+		switch len(centsStr) {
+		case 1:
+			centsStr = "00" + centsStr
+		case 2:
+			centsStr = "0" + centsStr
+		}
+		rest := centsStr[:len(centsStr)-2]
+		var parts []string
+		for len(rest) > 3 {
+			parts = append(parts, rest[len(rest)-3:])
+			rest = rest[:len(rest)-3]
+		}
+		if len(rest) > 0 {
+			parts = append(parts, rest)
+		}
+		for i := len(parts) - 1; i >= 0; i-- {
+			s += parts[i] + ","
+		}
+		s = s[:len(s)-1]
+		s += "."
+		s += centsStr[len(centsStr)-2:]
+		if negative {
+			s += ")"
+		} else {
+			s += " "
+		}
+		return s, nil
 	} else {
-		s += " "
+		return "", errors.New("")
 	}
-	return s
 }
