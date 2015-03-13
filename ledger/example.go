@@ -76,9 +76,6 @@ func (f localeInfo) Date(t time.Time) string {
 	return t.Format(f.dateFormat)
 }
 
-//	Currency(symbol string, cents int) string
-//	Date(symbol string, cents int) string
-
 var locales = map[string]localeInfo{
 	"nl-NL": {
 		currency:   dutchCurrencyFormat,
