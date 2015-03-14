@@ -10,10 +10,26 @@ import (
 
 const TestVersion = 1
 
+type Currency interface {
+	// Units returns the currency with a given precision, truncated towards zero.
+	// The amount 123.45 gets returned as:
+	// 123 - with precision 0
+	// 12 - with precision -1
+	// 1234 - with precision 1
+	// 12345 - with precision 2
+	Units(precision int) int64
+}
+
 type Entry struct {
 	Date        string // "Y-m-d"
 	Description string
-	Change      int // in cents
+	Change      Currency
+}
+
+type fake struct{}
+
+func (f fake) Units(i int) int64 {
+	return 0
 }
 
 func FormatLedger(currency string, locale string, entries []Entry) (string, error) {
@@ -22,7 +38,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		entriesCopy = append(entriesCopy, e)
 	}
 	if len(entries) == 0 {
-		if _, err := FormatLedger(currency, "en-US", []Entry{{Date: "2014-01-01", Description: "", Change: 0}}); err != nil {
+		if _, err := FormatLedger(currency, "en-US", []Entry{{Date: "2014-01-01", Description: "", Change: fake{}}}); err != nil {
 			return "", err
 		}
 	}
@@ -37,7 +53,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 			for i, e := range rest {
 				if (m1[e.Date == first.Date]*m2[e.Date < first.Date]*4 +
 					m1[e.Description == first.Description]*m2[e.Description < first.Description]*2 +
-					m1[e.Change == first.Change]*m2[e.Change < first.Change]*1) < 0 {
+					m1[e.Change.Units(2) == first.Change.Units(2)]*m2[e.Change.Units(2) < first.Change.Units(2)]*1) < 0 {
 					es[0], es[i+1] = es[i+1], es[0]
 					success = false
 				}
@@ -103,7 +119,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 				d = d3 + "/" + d5 + "/" + d1
 			}
 			negative := false
-			cents := entry.Change
+			cents := entry.Change.Units(2)
 			if cents < 0 {
 				cents = cents * -1
 				negative = true
@@ -121,7 +137,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 					}{e: errors.New("")}
 				}
 				a += " "
-				centsStr := strconv.Itoa(cents)
+				centsStr := strconv.FormatInt(cents, 10)
 				switch len(centsStr) {
 				case 1:
 					centsStr = "00" + centsStr
@@ -162,7 +178,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 						e error
 					}{e: errors.New("")}
 				}
-				centsStr := strconv.Itoa(cents)
+				centsStr := strconv.FormatInt(cents, 10)
 				switch len(centsStr) {
 				case 1:
 					centsStr = "00" + centsStr

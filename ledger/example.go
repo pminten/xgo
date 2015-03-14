@@ -12,10 +12,20 @@ import (
 
 const TestVersion = 1
 
+type Currency interface {
+	// Units returns the currency with a given precision, truncated towards zero.
+	// The amount 123.45 gets returned as:
+	// 123 - with precision 0
+	// 12 - with precision -1
+	// 1234 - with precision 1
+	// 12345 - with precision 2
+	Units(precision int) int64
+}
+
 type Entry struct {
 	Date        string // "Y-m-d"
 	Description string
-	Change      int // in cents
+	Change      Currency
 }
 
 func FormatLedger(currency string, locale string, entries []Entry) (string, error) {
@@ -47,7 +57,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		buf.WriteString(fmt.Sprintf("%-10s | %-25s | %13s\n",
 			locInfo.dateString(date),
 			description,
-			locInfo.currencyString(symbol, entry.Change)))
+			locInfo.currencyString(symbol, entry.Change.Units(2))))
 	}
 	return buf.String(), nil
 }
@@ -58,18 +68,18 @@ var currencySymbols = map[string]string{
 }
 
 type localeInfo struct {
-	currency     func(symbol string, cents int, negative bool) string
+	currency     func(symbol string, amount int64, negative bool) string
 	dateFormat   string
 	translations map[string]string
 }
 
-func (f localeInfo) currencyString(symbol string, cents int) string {
+func (f localeInfo) currencyString(symbol string, amount int64) string {
 	negative := false
-	if cents < 0 {
-		cents = cents * -1
+	if amount < 0 {
+		amount = amount * -1
 		negative = true
 	}
-	return f.currency(symbol, cents, negative)
+	return f.currency(symbol, amount, negative)
 }
 
 func (f localeInfo) dateString(t time.Time) string {
@@ -98,11 +108,11 @@ var locales = map[string]localeInfo{
 }
 
 // The sign and amount are passed in separately to simplify some logic.
-func dutchCurrencyFormat(symbol string, cents int, negative bool) string {
+func dutchCurrencyFormat(symbol string, amount int64, negative bool) string {
 	var buf bytes.Buffer
 	buf.WriteString(symbol)
 	buf.WriteRune(' ')
-	buf.WriteString(moneyToString(cents, ".", ","))
+	buf.WriteString(moneyToString(amount, ".", ","))
 	if negative {
 		buf.WriteRune('-')
 	} else {
@@ -111,13 +121,13 @@ func dutchCurrencyFormat(symbol string, cents int, negative bool) string {
 	return buf.String()
 }
 
-func americanCurrencyFormat(symbol string, cents int, negative bool) string {
+func americanCurrencyFormat(symbol string, amount int64, negative bool) string {
 	var buf bytes.Buffer
 	if negative {
 		buf.WriteRune('(')
 	}
 	buf.WriteString(symbol)
-	buf.WriteString(moneyToString(cents, ",", "."))
+	buf.WriteString(moneyToString(amount, ",", "."))
 	if negative {
 		buf.WriteRune(')')
 	} else {
@@ -126,9 +136,9 @@ func americanCurrencyFormat(symbol string, cents int, negative bool) string {
 	return buf.String()
 }
 
-// Precondition: cents is not negative
-func moneyToString(cents int, thousandsSep, decimalSep string) string {
-	centsStr := fmt.Sprintf("%03d", cents) // Pad to 3 digits
+// Precondition: amount is not negative
+func moneyToString(amount int64, thousandsSep, decimalSep string) string {
+	centsStr := fmt.Sprintf("%03d", amount) // Pad to 3 digits
 	centsPart := centsStr[len(centsStr)-2:]
 	rest := centsStr[:len(centsStr)-2]
 	var parts []string
@@ -163,7 +173,7 @@ func (e entrySlice) Swap(i, j int) {
 func (e entrySlice) Less(i, j int) bool {
 	if e[i].Date == e[j].Date {
 		if e[i].Description == e[i].Description {
-			return e[i].Change < e[j].Change
+			return e[i].Change.Units(2) < e[j].Change.Units(2)
 		} else {
 			return e[i].Description < e[j].Description
 		}

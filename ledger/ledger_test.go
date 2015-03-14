@@ -8,6 +8,24 @@ import (
 
 const testVersion = 1
 
+type money int64
+
+func (m money) Units(precision int) int64 {
+	i := int64(m)
+	if precision == 2 {
+		return i
+	} else if precision > 2 {
+		for j := 0; j < precision-2; j++ {
+			i = i * 10
+		}
+	} else {
+		for j := 0; j < 2-precision; j++ {
+			i = i / 10
+		}
+	}
+	return i
+}
+
 var successTestCases = []struct {
 	name     string
 	currency string
@@ -32,7 +50,7 @@ Date       | Description               | Change
 			{
 				Date:        "2015-01-01",
 				Description: "Buy present",
-				Change:      -1000,
+				Change:      money(-1000),
 			},
 		},
 		expected: `
@@ -48,12 +66,12 @@ Date       | Description               | Change
 			{
 				Date:        "2015-01-02",
 				Description: "Get present",
-				Change:      1000,
+				Change:      money(1000),
 			},
 			{
 				Date:        "2015-01-01",
 				Description: "Buy present",
-				Change:      -1000,
+				Change:      money(-1000),
 			},
 		},
 		expected: `
@@ -70,12 +88,12 @@ Date       | Description               | Change
 			{
 				Date:        "2015-01-01",
 				Description: "Buy present",
-				Change:      -1000,
+				Change:      money(-1000),
 			},
 			{
 				Date:        "2015-01-01",
 				Description: "Get present",
-				Change:      1000,
+				Change:      money(1000),
 			},
 		},
 		expected: `
@@ -92,17 +110,17 @@ Date       | Description               | Change
 			{
 				Date:        "2015-01-01",
 				Description: "Something",
-				Change:      0,
+				Change:      money(0),
 			},
 			{
 				Date:        "2015-01-01",
 				Description: "Something",
-				Change:      -1,
+				Change:      money(-1),
 			},
 			{
 				Date:        "2015-01-01",
 				Description: "Something",
-				Change:      1,
+				Change:      money(1),
 			},
 		},
 		expected: `
@@ -120,7 +138,7 @@ Date       | Description               | Change
 			{
 				Date:        "2015-01-01",
 				Description: "Freude schöner Götterfunken",
-				Change:      -123456,
+				Change:      money(-123456),
 			},
 		},
 		expected: `
@@ -136,7 +154,7 @@ Date       | Description               | Change
 			{
 				Date:        "2015-01-01",
 				Description: "Buy present",
-				Change:      -1000,
+				Change:      money(-1000),
 			},
 		},
 		expected: `
@@ -152,7 +170,7 @@ Date       | Description               | Change
 			{
 				Date:        "2015-03-12",
 				Description: "Buy present",
-				Change:      123456,
+				Change:      money(123456),
 			},
 		},
 		expected: `
@@ -168,7 +186,7 @@ Datum      | Omschrijving              | Verandering
 			{
 				Date:        "2015-03-12",
 				Description: "Buy present",
-				Change:      -12345,
+				Change:      money(-12345),
 			},
 		},
 		expected: `
@@ -184,7 +202,7 @@ Datum      | Omschrijving              | Verandering
 			{
 				Date:        "2015-03-12",
 				Description: "Buy present",
-				Change:      -12345,
+				Change:      money(-12345),
 			},
 		},
 		expected: `
@@ -232,7 +250,7 @@ var failureTestCases = []struct {
 			{
 				Date:        "2015-131-11",
 				Description: "Buy present",
-				Change:      12345,
+				Change:      money(12345),
 			},
 		},
 	},
@@ -244,7 +262,7 @@ var failureTestCases = []struct {
 			{
 				Date:        "2015-12/11",
 				Description: "Buy present",
-				Change:      12345,
+				Change:      money(12345),
 			},
 		},
 	},
@@ -283,12 +301,12 @@ func TestFormatLedgerNotChangeInput(t *testing.T) {
 		{
 			Date:        "2015-01-02",
 			Description: "Freude schöner Götterfunken",
-			Change:      1000,
+			Change:      money(1000),
 		},
 		{
 			Date:        "2015-01-01",
 			Description: "Buy present",
-			Change:      -1000,
+			Change:      money(-1000),
 		},
 	}
 	entriesCopy := make([]Entry, len(entries))
