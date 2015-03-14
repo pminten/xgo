@@ -194,7 +194,7 @@ Date       | Description               | Change
 	},
 }
 
-var failTestCases = []struct {
+var failureTestCases = []struct {
 	name     string
 	currency string
 	locale   string
@@ -269,8 +269,8 @@ func TestFormatLedgerSuccess(t *testing.T) {
 	}
 }
 
-func TestFormatLedgerFail(t *testing.T) {
-	for _, tt := range failTestCases {
+func TestFormatLedgerFailure(t *testing.T) {
+	for _, tt := range failureTestCases {
 		_, err := FormatLedger(tt.currency, tt.locale, tt.entries)
 		if err == nil {
 			t.Fatalf("FormatLedger for input %q should have failed but didn't.", tt.name)
